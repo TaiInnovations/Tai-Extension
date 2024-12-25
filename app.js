@@ -25,7 +25,27 @@ const EYE_CLOSED = 'M12 6.5c3.79 0 7.17 2.13 8.82 5.5-1.65 3.37-5.02 5.5-8.82 5.
 // 初始化 marked 配置
 marked.setOptions({
   breaks: true,
-  gfm: true
+  gfm: true,
+  mangle: false,
+  headerIds: false,
+  pedantic: false,
+  smartLists: true,
+  smartypants: true,
+  highlight: function(code, language) {
+    if (language && hljs.getLanguage(language)) {
+      try {
+        return hljs.highlight(code, { language }).value;
+      } catch (err) {
+        console.error('代码高亮错误:', err);
+      }
+    }
+    try {
+      return hljs.highlightAuto(code).value;
+    } catch (err) {
+      console.error('自动代码高亮错误:', err);
+    }
+    return code; // 如果高亮失败，返回原始代码
+  }
 });
 
 // 初始化
@@ -129,12 +149,24 @@ function updateChatList() {
     chatBtn.innerHTML = `
       <div class="title">${chat.title}</div>
       <div class="chat-count">${chat.messageCount || 0} 条对话</div>
+      <button class="delete-btn" title="删除会话">×</button>
     `;
     
-    chatBtn.addEventListener('click', () => {
-      if (parseInt(chat.id) !== parseInt(currentChatId)) {
-        switchChat(chat.id);
+    // 点击聊天项切换聊天
+    chatBtn.addEventListener('click', (e) => {
+      // 如果点击的是删除按钮，不切换聊天
+      if (e.target.classList.contains('delete-btn')) {
+        return;
       }
+      // 总是切换到聊天页面，即使是当前聊天
+      switchChat(chat.id);
+    });
+    
+    // 删除按钮点击事件
+    const deleteBtn = chatBtn.querySelector('.delete-btn');
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteChat(chat.id);
     });
     
     chatList.appendChild(chatBtn);
@@ -276,6 +308,25 @@ async function sendMessage() {
 
     const model = selectedModel || DEFAULT_MODEL;
     
+    // 创建 AI 消息占位
+    const aiMessage = {
+      id: Date.now(),
+      content: '',
+      role: 'assistant',
+      timestamp: new Date().toISOString()
+    };
+    
+    const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
+    if (!currentChat) return;
+    
+    currentChat.messages = currentChat.messages || [];
+    currentChat.messages.push(aiMessage);
+    currentChat.messageCount = (currentChat.messageCount || 0) + 1;
+    
+    messageCount = currentChat.messageCount;
+    chatCountSpan.textContent = `共 ${messageCount} 条对话`;
+    displayCurrentChat();
+    
     // 调用 Open Router API
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -283,27 +334,87 @@ async function sendMessage() {
         'Authorization': `Bearer ${geminiApiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://github.com/tassel',
-        'X-Title': 'Tai Chat'
+        'X-Title': 'Tai Chat',
+        'Accept': 'text/event-stream'
       },
       body: JSON.stringify({
         model: model,
         messages: [{
           role: 'user',
           content: message
-        }]
+        }],
+        stream: true
       })
     });
 
     if (!response.ok) {
-      throw new Error('API 请求失败');
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'API 请求失败');
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-    
-    // 添加 AI 响应
-    addMessage(aiResponse, 'assistant');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        // 处理缓冲区中的完整事件
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一个不完整的行
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+          
+          // 处理特殊的状态消息
+          if (trimmedLine === ': OPENROUTER PROCESSING' || trimmedLine === 'data: [DONE]') {
+            continue;
+          }
+          
+          // 确保行以 'data: ' 开头
+          if (!trimmedLine.startsWith('data: ')) {
+            console.log('跳过非数据行:', trimmedLine);
+            continue;
+          }
+          
+          // 移除 'data: ' 前缀并解析 JSON
+          const jsonStr = trimmedLine.slice(6);
+          
+          try {
+            const event = JSON.parse(jsonStr);
+            if (!event.choices || !event.choices.length) continue;
+            
+            const delta = event.choices[0].delta;
+            if (!delta || !delta.content) continue;
+            
+            // 更新消息内容
+            aiMessage.content += delta.content;
+            displayCurrentChat();
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          } catch (e) {
+            console.log('无法解析的数据:', jsonStr);
+            continue;
+          }
+        }
+      }
+    } catch (streamError) {
+      console.error('流式处理错误:', streamError);
+      // 即使流处理出错，也保留已经生成的内容
+    } finally {
+      // 完成后确保内容被保存
+      if (aiMessage.content) {
+        saveToStorage();
+      }
+    }
   } catch (error) {
+    console.error('API 错误:', error);
     addMessage(error.message, 'error');
   }
 }
@@ -358,11 +469,73 @@ function renderMessage(message) {
   if (message.role === 'error') {
     content.textContent = message.content || '未知错误';
   } else {
-    content.innerHTML = marked.parse(message.content || '');
+    // 预处理代码块，确保语言标记正确
+    let processedContent = message.content || '';
+    processedContent = processedContent.replace(/```(\w+)?\n/g, (match, lang) => {
+      return `\`\`\`${lang || 'plaintext'}\n`;
+    });
+    
+    content.innerHTML = marked.parse(processedContent);
+    
+    // 处理没有指定语言的代码块
+    content.querySelectorAll('pre code:not([class])').forEach(block => {
+      block.className = 'language-plaintext';
+    });
+    
+    // 应用代码高亮
+    content.querySelectorAll('pre code').forEach(block => {
+      hljs.highlightElement(block);
+      
+      // 添加复制按钮
+      const pre = block.parentElement;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '复制';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(block.innerText);
+          copyBtn.textContent = '已复制';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = '复制';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        } catch (err) {
+          console.error('复制失败:', err);
+        }
+      });
+      pre.appendChild(copyBtn);
+    });
   }
   
   messageDiv.appendChild(avatar);
   messageDiv.appendChild(content);
   
   return messageDiv;
+}
+
+// 删除聊天
+function deleteChat(chatId) {
+  const id = parseInt(chatId);
+  
+  // 找到要删除的聊天索引
+  const index = chats.findIndex(chat => parseInt(chat.id) === id);
+  if (index === -1) return;
+  
+  // 删除聊天
+  chats.splice(index, 1);
+  
+  // 如果删除后没有聊天了，创建新的
+  if (chats.length === 0) {
+    createNewChat();
+  } else if (parseInt(currentChatId) === id) {
+    // 如果删除的是当前聊天，切换到下一个或上一个
+    const nextChat = chats[index] || chats[index - 1];
+    currentChatId = nextChat.id;
+  }
+  
+  // 更新界面
+  updateChatList();
+  displayCurrentChat();
+  saveToStorage();
 } 

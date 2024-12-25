@@ -88,6 +88,7 @@ body {
   transition: all 0.2s;
   font-size: 14px;
   color: #333;
+  position: relative;
 }
 
 .chat-item:hover {
@@ -112,6 +113,39 @@ body {
 .chat-item .chat-count {
   font-size: 12px;
   color: #666;
+}
+
+.chat-item .delete-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.chat-item:hover .delete-btn {
+  display: flex;
+}
+
+.chat-item .delete-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+.chat-item.active .delete-btn:hover {
+  background: rgba(30, 136, 229, 0.1);
+  color: #1e88e5;
 }
 
 /* 导航按钮 */
@@ -274,19 +308,48 @@ body {
   position: relative;
   min-width: 60px;
   max-width: 100%;
-}
-
-/* Markdown 样式 */
-.message .content {
   line-height: 1.6;
 }
 
+/* Markdown 样式 */
 .message .content p {
   margin: 0 0 1em;
+  white-space: pre-wrap;
 }
 
 .message .content p:last-child {
   margin-bottom: 0;
+}
+
+.message .content ul,
+.message .content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.message .content ul li,
+.message .content ol li {
+  margin: 0.3em 0;
+  padding-left: 0.2em;
+}
+
+.message .content ul li::marker {
+  content: "• ";
+  color: #666;
+}
+
+.message .content ol li::marker {
+  color: #666;
+}
+
+.message .content * + ul,
+.message .content * + ol {
+  margin-top: 0.5em;
+}
+
+.message .content ul + *,
+.message .content ol + * {
+  margin-top: 1em;
 }
 
 .message .content h1,
@@ -309,26 +372,83 @@ body {
 }
 
 .message .content code {
-  background: rgba(0, 0, 0, 0.05);
   padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
   font-size: 0.9em;
+  color: #24292e;
+}
+
+.message .content p code {
+  background: rgba(175, 184, 193, 0.2);
 }
 
 .message .content pre {
-  background: rgba(0, 0, 0, 0.03);
+  background: #f6f8fa;
   padding: 1em;
   border-radius: 8px;
   overflow-x: auto;
   margin: 1em 0;
+  border: 1px solid #e1e4e8;
+  position: relative;
 }
 
 .message .content pre code {
   background: none;
   padding: 0;
-  font-size: 0.9em;
-  color: #333;
+  border-radius: 0;
+}
+
+.message .content pre code[class*="language-"]::before {
+  content: attr(class);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  color: #666;
+  background: #f6f8fa;
+  border-bottom-left-radius: 4px;
+  border-left: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
+  text-transform: uppercase;
+  transform: translateY(-1px);
+}
+
+.message .content pre code[class="language-plaintext"]::before {
+  display: none;
+}
+
+.message .content pre .copy-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  color: #666;
+  background: #f6f8fa;
+  border: none;
+  border-left: 1px solid #e1e4e8;
+  border-top: 1px solid #e1e4e8;
+  border-top-left-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+
+.message .content pre:hover .copy-btn {
+  opacity: 1;
+}
+
+.message .content pre .copy-btn:hover {
+  color: #1e88e5;
+  background: #f0f7ff;
+}
+
+.message .content pre .copy-btn.copied {
+  color: #2e7d32;
+  pointer-events: none;
 }
 
 .message .content blockquote {
@@ -336,12 +456,6 @@ body {
   margin: 1em 0;
   padding: 0 1em;
   color: #666;
-}
-
-.message .content ul,
-.message .content ol {
-  margin: 1em 0;
-  padding-left: 2em;
 }
 
 .message .content img {
@@ -597,4 +711,29 @@ body {
   font-family: inherit !important;
   -moz-text-security: none !important;
   text-security: none !important;
+}
+
+/* 代码块语言标记 */
+.message .content pre {
+  position: relative;
+}
+
+.message .content pre code[class*="language-"]::before {
+  content: attr(class);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  color: #666;
+  background: #f6f8fa;
+  border-bottom-left-radius: 4px;
+  border-left: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
+  text-transform: uppercase;
+  transform: translateY(-1px);
+}
+
+.message .content pre code[class="language-plaintext"]::before {
+  display: none;
 } 
