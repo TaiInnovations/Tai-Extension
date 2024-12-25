@@ -346,7 +346,8 @@ body {
 .message {
   margin-bottom: 20px;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
   max-width: 900px;
   margin-left: auto;
   margin-right: auto;
@@ -354,13 +355,25 @@ body {
   padding: 0 20px;
 }
 
-.message.assistant {
+.message .message-content {
+  display: flex;
+  gap: 12px;
+}
+
+.message.assistant .message-content {
   padding-right: 20%;
 }
 
-.message.user {
+.message.user .message-content {
   flex-direction: row-reverse;
   padding-left: 20%;
+}
+
+.message .timestamp {
+  font-size: 12px;
+  color: #999;
+  padding: 0 12px;
+  text-align: center;
 }
 
 .message .avatar {
@@ -841,4 +854,24 @@ body {
 .model-select option {
   padding: 8px;
   font-size: 14px;
+}
+
+.chat-item .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.chat-item .meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.chat-item .timestamp {
+  color: #999;
+  font-size: 12px;
 } 

@@ -275,9 +275,25 @@ function updateChatList() {
       chatBtn.classList.add('active');
     }
     
+    // 格式化时间
+    const date = new Date(chat.createdAt);
+    const formattedDate = date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
     chatBtn.innerHTML = `
-      <div class="title">${chat.title}</div>
-      <div class="chat-count">${chat.messageCount || 0} 条对话</div>
+      <div class="info">
+        <div class="title">${chat.title}</div>
+        <div class="meta">
+          <span class="chat-count">${chat.messageCount || 0} 条对话</span>
+          <span class="timestamp">${formattedDate}</span>
+        </div>
+      </div>
       <button class="delete-btn" title="删除会话">×</button>
     `;
     
@@ -607,6 +623,10 @@ function renderMessage(message) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${message.role}`;
   
+  // 创建消息内容容器
+  const contentWrapper = document.createElement('div');
+  contentWrapper.className = 'message-content';
+  
   const avatar = document.createElement('div');
   avatar.className = 'avatar';
   
@@ -656,8 +676,25 @@ function renderMessage(message) {
     });
   }
   
-  messageDiv.appendChild(avatar);
-  messageDiv.appendChild(content);
+  contentWrapper.appendChild(avatar);
+  contentWrapper.appendChild(content);
+  
+  // 添加时间戳
+  const timestamp = document.createElement('div');
+  timestamp.className = 'timestamp';
+  const date = new Date(message.timestamp);
+  timestamp.textContent = date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  messageDiv.appendChild(contentWrapper);
+  messageDiv.appendChild(timestamp);
   
   return messageDiv;
 }
