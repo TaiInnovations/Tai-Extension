@@ -41,11 +41,16 @@
       <div id="chat-page" class="page active">
         <div class="chat-header">
           <span>共 0 条对话</span>
-          <div class="actions">
-            <button id="refresh" title="刷新">↻</button>
-            <button id="copy" title="复制">📋</button>
-            <button id="share" title="分享">↗</button>
-            <button id="fullscreen" title="全屏">⛶</button>
+          <div class="header-actions">
+            <div class="model-selector-container">
+              <button id="current-model" class="model-selector" title="切换模型">
+                <span class="model-name">Gemini</span>
+                <span class="model-arrow">▼</span>
+              </button>
+              <div class="model-dropdown">
+                <!-- 模型选项将在这里动态生成 -->
+              </div>
+            </div>
           </div>
         </div>
         
@@ -54,25 +59,14 @@
         </div>
         
         <div class="input-area">
-          <div class="toolbar">
-            <button class="tool-btn" title="AI 模型">🤖</button>
-            <button class="tool-btn" title="角色">👤</button>
-            <button class="tool-btn" title="刷新">🔄</button>
-            <button class="tool-btn" title="密钥">🔑</button>
-            <button class="tool-btn" title="Reddit">👽</button>
-            <button class="tool-btn" title="日历">📅</button>
-            <button class="tool-btn" title="GitHub">🐙</button>
-            <button class="tool-btn" title="应用">📱</button>
-            <button class="tool-btn" title="聊天">💬</button>
-          </div>
           <div class="input-wrapper">
             <textarea id="user-input" placeholder="输入消息..." rows="1"></textarea>
             <button id="send-btn">发送</button>
           </div>
-          <p class="input-hint">Enter 发送, Shift + Enter 换行</p>
+          <div class="input-hint">按 Enter 发送，Shift + Enter 换行</div>
         </div>
       </div>
-
+      
       <!-- 设置界面 -->
       <div id="settings-page" class="page">
         <div class="settings-header">
@@ -80,51 +74,40 @@
         </div>
         <div class="settings-content">
           <div class="settings-section">
-            <h3>API 配置</h3>
+            <h3>API 设置</h3>
             <div class="form-group">
-              <label for="api-key">Open Router API Key</label>
+              <label for="api-key">OpenRouter API Key</label>
               <div class="input-with-toggle">
-                <input 
-                  type="text" 
-                  id="api-key" 
-                  class="custom-password"
-                  placeholder="输入你的 Open Router API Key"
-                  autocomplete="new-password"
-                  spellcheck="false"
-                >
-                <button type="button" id="toggle-password" class="toggle-password" title="显示/隐藏">
-                  <svg viewBox="0 0 24 24" class="eye-icon">
-                    <path fill="currentColor" d="M12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                <input type="password" id="api-key" class="custom-password" placeholder="输入 API Key">
+                <button id="toggle-password" class="toggle-password" title="显示/隐藏">
+                  <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                   </svg>
                 </button>
               </div>
-              <p class="api-hint">
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">
-                  👉 点击获取 API Key
+              <div class="api-hint">
+                <a href="https://openrouter.ai/keys" target="_blank">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                  获取 API Key
                 </a>
-              </p>
+              </div>
             </div>
           </div>
 
           <div class="settings-section">
             <h3>模型设置</h3>
             <div class="form-group">
-              <label for="model">选择模型</label>
-              <select id="model">
-                <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (默认)</option>
-                <option value="google/gemini-exp-1206:free">Gemini Exp 1206</option>
-                <option value="google/gemini-exp-1121:free">Gemini Exp 1121</option>
-                <option value="google/learnlm-1.5-pro-experimental:free">LearnLM 1.5 Pro</option>
-                <option value="google/gemini-exp-1114:free">Gemini Exp 1114</option>
-                <option value="google/gemini-2.0-flash-thinking-exp:free">Gemini 2.0 Flash Thinking</option>
+              <label for="model-select">选择模型</label>
+              <select id="model-select" class="model-select">
+                <!-- 模型选项将在这里动态生成 -->
               </select>
             </div>
           </div>
 
-          <div class="settings-section">
-            <button id="save-settings" class="save-btn">保存设置</button>
-            <div id="settings-status" class="status"></div>
-          </div>
+          <button id="save-settings" class="save-btn">保存设置</button>
+          <div id="settings-status" class="status"></div>
         </div>
       </div>
     </div>

@@ -19,6 +19,14 @@ const chatCountSpan = document.querySelector('.chat-header span');
 
 // 常量
 const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
+const AVAILABLE_MODELS = [
+  { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash' },
+  { id: 'google/gemini-exp-1206:free', name: 'Gemini Exp 1206' },
+  { id: 'google/gemini-exp-1121:free', name: 'Gemini Exp 1121' },
+  { id: 'google/learnlm-1.5-pro-experimental:free', name: 'LearnLM 1.5 Pro' },
+  { id: 'google/gemini-exp-1114:free', name: 'Gemini Exp 1114' },
+  { id: 'google/gemini-2.0-flash-thinking-exp:free', name: 'Gemini 2.0 Flash Thinking' }
+];
 const EYE_OPEN = 'M12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z';
 const EYE_CLOSED = 'M12 6.5c3.79 0 7.17 2.13 8.82 5.5-1.65 3.37-5.02 5.5-8.82 5.5S4.83 15.37 3.18 12C4.83 8.63 8.21 6.5 12 6.5m0-2C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5m0-2c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5z';
 
@@ -72,10 +80,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 设置事件监听器
     setupEventListeners();
+    
+    // 初始化模型选择器
+    initializeModelSelectors();
   } catch (error) {
     console.error('初始化失败:', error);
   }
 });
+
+// 初始化模型选择器
+function initializeModelSelectors() {
+  const modelSelect = document.getElementById('model-select');
+  const modelDropdown = document.querySelector('.model-dropdown');
+  
+  // 获取当前选中的模型
+  chrome.storage.local.get(['selectedModel'], ({ selectedModel }) => {
+    const currentModelId = selectedModel || DEFAULT_MODEL;
+    
+    // 更新设置页面的模型选择下拉框
+    if (modelSelect) {
+      modelSelect.innerHTML = AVAILABLE_MODELS.map(model => `
+        <option value="${model.id}" ${model.id === currentModelId ? 'selected' : ''}>
+          ${model.name}
+        </option>
+      `).join('');
+      
+      // 监听模型选择变化
+      modelSelect.addEventListener('change', (e) => {
+        const selectedModel = AVAILABLE_MODELS.find(model => model.id === e.target.value);
+        if (selectedModel) {
+          switchModel(selectedModel.id, selectedModel.name);
+        }
+      });
+    }
+    
+    // 更新聊天页面的模型选择器
+    if (modelDropdown) {
+      modelDropdown.innerHTML = '';
+      AVAILABLE_MODELS.forEach(model => {
+        const option = document.createElement('div');
+        option.className = 'model-option';
+        if (model.id === currentModelId) {
+          option.classList.add('selected');
+        }
+        
+        option.innerHTML = `
+          <span>${model.name}</span>
+          ${model.id === currentModelId ? '<span>✓</span>' : ''}
+        `;
+        
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchModel(model.id, model.name);
+          document.getElementById('current-model').classList.remove('active');
+        });
+        
+        modelDropdown.appendChild(option);
+      });
+      
+      // 更新显示的模型名称
+      const modelName = AVAILABLE_MODELS.find(model => model.id === currentModelId)?.name;
+      if (modelName) {
+        document.querySelector('.model-name').textContent = modelName;
+      }
+    }
+  });
+}
 
 // 事件监听器设置
 function setupEventListeners() {
@@ -94,7 +164,14 @@ function setupEventListeners() {
   // 设置按钮
   navSettingsButton.addEventListener('click', () => {
     const isSettingsActive = settingsPage.classList.contains('active');
-    switchPage(isSettingsActive ? 'chat' : 'settings');
+    if (isSettingsActive) {
+      // 如果当前在设置页面，切换回聊天页面并显示当前会话
+      switchPage('chat');
+      displayCurrentChat();
+    } else {
+      // 如果当前在聊天页面，切换到设置页面
+      switchPage('settings');
+    }
   });
 
   // 密码显示切换
@@ -108,6 +185,58 @@ function setupEventListeners() {
 
   // 保存设置
   saveSettingsButton.addEventListener('click', saveSettings);
+
+  // 模型选择器
+  const modelSelector = document.getElementById('current-model');
+  const modelDropdown = document.querySelector('.model-dropdown');
+  
+  if (modelSelector && modelDropdown) {
+    // 清空并重新创建下拉菜单选项
+    modelDropdown.innerHTML = '';
+    
+    // 获取当前选中的模型
+    chrome.storage.local.get(['selectedModel'], ({ selectedModel }) => {
+      const currentModelId = selectedModel || DEFAULT_MODEL;
+      
+      // 创建模型选项
+      AVAILABLE_MODELS.forEach(model => {
+        const option = document.createElement('div');
+        option.className = 'model-option';
+        if (model.id === currentModelId) {
+          option.classList.add('selected');
+        }
+        
+        option.innerHTML = `
+          <span>${model.name}</span>
+          ${model.id === currentModelId ? '<span>✓</span>' : ''}
+        `;
+        
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchModel(model.id, model.name);
+          modelSelector.classList.remove('active');
+        });
+        
+        modelDropdown.appendChild(option);
+      });
+    });
+    
+    // 切换下拉菜单显示
+    modelSelector.addEventListener('click', (e) => {
+      e.stopPropagation();
+      modelSelector.classList.toggle('active');
+    });
+    
+    // 点击外部关闭下拉菜单
+    document.addEventListener('click', () => {
+      modelSelector.classList.remove('active');
+    });
+    
+    // 防止下拉菜单点击事件冒泡
+    modelDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
 }
 
 // 聊天相关函数
@@ -219,14 +348,25 @@ function displayCurrentChat() {
 
 // 页面切换
 function switchPage(page) {
-  if (page === 'chat') {
+  const chatPage = document.getElementById('chat-page');
+  const settingsPage = document.getElementById('settings-page');
+  const navSettingsButton = document.getElementById('nav-settings');
+  const allChatItems = document.querySelectorAll('.chat-item');
+
+  if (page === 'settings') {
+    chatPage.classList.remove('active');
+    settingsPage.classList.add('active');
+    navSettingsButton.classList.add('active');
+    // 移除会话列表的选中状态
+    allChatItems.forEach(item => item.classList.remove('active'));
+  } else {
     chatPage.classList.add('active');
     settingsPage.classList.remove('active');
     navSettingsButton.classList.remove('active');
-  } else if (page === 'settings') {
-    settingsPage.classList.add('active');
-    chatPage.classList.remove('active');
-    navSettingsButton.classList.add('active');
+    // 恢复当前会话的选中状态
+    allChatItems.forEach(item => {
+      item.classList.toggle('active', parseInt(item.dataset.chatId) === parseInt(currentChatId));
+    });
   }
 }
 
@@ -236,16 +376,18 @@ async function loadSettings() {
   if (geminiApiKey) {
     apiKeyInput.value = geminiApiKey;
   }
-  if (selectedModel) {
-    modelSelect.value = selectedModel;
-  } else {
-    modelSelect.value = DEFAULT_MODEL;
+  
+  // 更新当前选中的模型显示
+  const currentModel = AVAILABLE_MODELS.find(model => model.id === (selectedModel || DEFAULT_MODEL));
+  if (currentModel) {
+    document.querySelector('.model-name').textContent = currentModel.name;
   }
 }
 
 async function saveSettings() {
   const apiKey = apiKeyInput.value.trim();
-  const selectedModel = modelSelect.value;
+  const modelSelect = document.getElementById('model-select');
+  const selectedModel = modelSelect ? modelSelect.value : DEFAULT_MODEL;
 
   if (!apiKey) {
     showSettingsStatus('请输入 API Key', 'error');
@@ -271,6 +413,12 @@ async function saveSettings() {
       geminiApiKey: apiKey,
       selectedModel: selectedModel
     });
+
+    // 更新模型选择器
+    const selectedModelData = AVAILABLE_MODELS.find(model => model.id === selectedModel);
+    if (selectedModelData) {
+      switchModel(selectedModelData.id, selectedModelData.name);
+    }
 
     showSettingsStatus('设置已保存', 'success');
     setTimeout(() => switchPage('chat'), 1500);
@@ -538,4 +686,36 @@ function deleteChat(chatId) {
   updateChatList();
   displayCurrentChat();
   saveToStorage();
+}
+
+// 切换模型
+async function switchModel(modelId, modelName) {
+  try {
+    await chrome.storage.local.set({ selectedModel: modelId });
+    
+    // 更新聊天页面的模型显示
+    const modelNameElement = document.querySelector('.model-name');
+    if (modelNameElement) {
+      modelNameElement.textContent = modelName;
+    }
+    
+    // 更新聊天页面的下拉菜单选中状态
+    const options = document.querySelectorAll('.model-option');
+    options.forEach(option => {
+      const isSelected = option.querySelector('span').textContent === modelName;
+      option.classList.toggle('selected', isSelected);
+      option.innerHTML = `
+        <span>${option.querySelector('span').textContent}</span>
+        ${isSelected ? '<span>✓</span>' : ''}
+      `;
+    });
+    
+    // 更新设置页面的模型选择
+    const modelSelect = document.getElementById('model-select');
+    if (modelSelect) {
+      modelSelect.value = modelId;
+    }
+  } catch (error) {
+    console.error('切换模型失败:', error);
+  }
 } 
