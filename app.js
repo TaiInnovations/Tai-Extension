@@ -22,6 +22,12 @@ const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
 const EYE_OPEN = 'M12 4.5c-5 0-9.27 3.11-11 7.5 1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z';
 const EYE_CLOSED = 'M12 6.5c3.79 0 7.17 2.13 8.82 5.5-1.65 3.37-5.02 5.5-8.82 5.5S4.83 15.37 3.18 12C4.83 8.63 8.21 6.5 12 6.5m0-2C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5m0-2c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5z';
 
+// 初始化 marked 配置
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -167,20 +173,10 @@ function displayCurrentChat() {
   
   // 清空并显示消息
   chatMessages.innerHTML = '';
+  
   if (currentChat.messages && currentChat.messages.length > 0) {
     currentChat.messages.forEach(message => {
-      const messageElement = document.createElement('div');
-      messageElement.className = `message ${message.type}`;
-      
-      const avatar = document.createElement('div');
-      avatar.className = 'avatar';
-      
-      const content = document.createElement('div');
-      content.className = 'content';
-      content.textContent = message.text;
-      
-      messageElement.appendChild(avatar);
-      messageElement.appendChild(content);
+      const messageElement = renderMessage(message);
       chatMessages.appendChild(messageElement);
     });
   }
@@ -306,9 +302,9 @@ async function sendMessage() {
     const aiResponse = data.choices[0].message.content;
     
     // 添加 AI 响应
-    addMessage(aiResponse, 'ai');
+    addMessage(aiResponse, 'assistant');
   } catch (error) {
-    addMessage(`错误: ${error.message}`, 'error');
+    addMessage(error.message, 'error');
   }
 }
 
@@ -318,8 +314,8 @@ function addMessage(text, type) {
 
   const message = {
     id: Date.now(),
-    text,
-    type,
+    content: text || '',
+    role: type,
     timestamp: new Date().toISOString()
   };
 
@@ -345,4 +341,28 @@ function saveToStorage() {
     chats,
     currentChatId
   });
+}
+
+// 渲染消息
+function renderMessage(message) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${message.role}`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  
+  const content = document.createElement('div');
+  content.className = 'content';
+  
+  // 使用 marked 解析 Markdown
+  if (message.role === 'error') {
+    content.textContent = message.content || '未知错误';
+  } else {
+    content.innerHTML = marked.parse(message.content || '');
+  }
+  
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(content);
+  
+  return messageDiv;
 } 
