@@ -9,10 +9,18 @@
     "tabs"
   ],
   "action": {
-    "default_icon": "icons/icon.svg"
+    "default_icon": {
+      "16": "icons/png/icon16.png",
+      "32": "icons/png/icon32.png",
+      "48": "icons/png/icon48.png",
+      "128": "icons/png/icon128.png"
+    }
   },
   "icons": {
-    "128": "icons/icon.svg"
+    "16": "icons/png/icon16.png",
+    "32": "icons/png/icon32.png",
+    "48": "icons/png/icon48.png",
+    "128": "icons/png/icon128.png"
   },
   "background": {
     "service_worker": "background.js"

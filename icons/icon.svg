@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1e88e5;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c4dff;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect x="14" y="14" width="100" height="100" rx="20" fill="url(#grad)"/>
-  <text x="64" y="80" font-family="Arial" font-size="60" fill="white" text-anchor="middle">T</text>
-</svg> 
+<svg width="1024px" height="1024px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组</title>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="编组-2" transform="translate(-24, 0)">
+            <g id="编组" transform="translate(24, 0)">
+                <rect id="矩形" fill="#000000" x="0" y="0" width="1024" height="1024" rx="180"></rect>
+                <g id="形状结合" transform="translate(228.4015, 228.4015)" fill="#FFFFFF" fill-rule="nonzero">
+                    <path d="M184.939965,125.611115 L384.380278,245.149204 L383.646497,454.156171 L301.664309,568.465923 L302.054312,291.281688 L163.932636,206.599907 L57.2292625,208.411253 L0,127.42246 L184.939965,125.611115 Z M186.458108,251.004883 L264.983147,296.226141 L264.983147,568.465923 L186.458108,461.524384 L186.458108,251.004883 Z M568.465923,125.611115 L511.951259,205.838921 L406.617823,205.838921 L389.259967,219.257835 L310.83236,171.41395 L384.380278,125.611115 L568.465923,125.611115 Z M184.939965,0 L282.811412,63.9474766 L387.360786,0 L557.263785,0 L501.253097,84.5020226 L409.950829,84.5020226 L282.811412,148.449499 L162.714062,84.5020226 L64.3697262,84.5020226 L8.35903766,0 L184.939965,0 Z"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
