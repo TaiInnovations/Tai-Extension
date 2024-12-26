@@ -1,13 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiKeyInput = document.getElementById('api-key');
+  const glmApiKeyInput = document.getElementById('glm-api-key');
   const modelSelect = document.getElementById('model');
   const saveButton = document.getElementById('save');
   const statusDiv = document.getElementById('status');
 
   // 加载已保存的设置
-  chrome.storage.local.get(['geminiApiKey', 'selectedModel'], (result) => {
+  chrome.storage.local.get(['geminiApiKey', 'glmApiKey', 'selectedModel'], (result) => {
     if (result.geminiApiKey) {
       apiKeyInput.value = result.geminiApiKey;
+    }
+    if (result.glmApiKey) {
+      glmApiKeyInput.value = result.glmApiKey;
     }
     if (result.selectedModel) {
       modelSelect.value = result.selectedModel;
@@ -17,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存设置
   saveButton.addEventListener('click', async () => {
     const apiKey = apiKeyInput.value.trim();
+    const glmApiKey = glmApiKeyInput.value.trim();
     const selectedModel = modelSelect.value;
 
     if (!apiKey) {
@@ -37,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 保存设置
       await chrome.storage.local.set({
         geminiApiKey: apiKey,
+        glmApiKey: glmApiKey,
         selectedModel: selectedModel
       });
 

@@ -11,10 +11,12 @@ const navSettingsButton = document.getElementById('nav-settings');
 const chatPage = document.getElementById('chat-page');
 const settingsPage = document.getElementById('settings-page');
 const apiKeyInput = document.getElementById('api-key');
+const glmApiKeyInput = document.getElementById('glm-api-key');
 const modelSelect = document.getElementById('model');
 const saveSettingsButton = document.getElementById('save-settings');
 const settingsStatus = document.getElementById('settings-status');
 const togglePasswordButton = document.getElementById('toggle-password');
+const toggleGlmPasswordButton = document.getElementById('toggle-glm-password');
 const chatCountSpan = document.querySelector('.chat-header span');
 
 // 常量
@@ -25,7 +27,8 @@ const AVAILABLE_MODELS = [
   { id: 'google/gemini-exp-1121:free', name: 'Gemini Exp 1121' },
   { id: 'google/learnlm-1.5-pro-experimental:free', name: 'LearnLM 1.5 Pro' },
   { id: 'google/gemini-exp-1114:free', name: 'Gemini Exp 1114' },
-  { id: 'google/gemini-2.0-flash-thinking-exp:free', name: 'Gemini 2.0 Flash Thinking' }
+  { id: 'google/gemini-2.0-flash-thinking-exp:free', name: 'Gemini 2.0 Flash Thinking' },
+  { id: 'glm-4-flash', name: 'GLM-4 Flash' }
 ];
 const EYE_OPEN = 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z';
 const EYE_CLOSED = 'M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88';
@@ -184,6 +187,18 @@ function setupEventListeners() {
     );
     togglePasswordButton.setAttribute('title', isShown ? '隐藏' : '显示');
     apiKeyInput.type = isShown ? 'text' : 'password';
+  });
+
+  // GLM 密码显示切换
+  toggleGlmPasswordButton.addEventListener('click', () => {
+    const isShown = glmApiKeyInput.classList.toggle('show');
+    const eyePath = toggleGlmPasswordButton.querySelector('path');
+    eyePath.setAttribute(
+      'd',
+      isShown ? EYE_CLOSED : EYE_OPEN
+    );
+    toggleGlmPasswordButton.setAttribute('title', isShown ? '隐藏' : '显示');
+    glmApiKeyInput.type = isShown ? 'text' : 'password';
   });
 
   // 保存设置
@@ -391,9 +406,12 @@ function switchPage(page) {
 
 // 设置相关函数
 async function loadSettings() {
-  const { geminiApiKey, selectedModel } = await chrome.storage.local.get(['geminiApiKey', 'selectedModel']);
+  const { geminiApiKey, glmApiKey, selectedModel } = await chrome.storage.local.get(['geminiApiKey', 'glmApiKey', 'selectedModel']);
   if (geminiApiKey) {
     apiKeyInput.value = geminiApiKey;
+  }
+  if (glmApiKey) {
+    glmApiKeyInput.value = glmApiKey;
   }
   
   // 更新当前选中的模型显示
@@ -405,33 +423,41 @@ async function loadSettings() {
 
 async function saveSettings() {
   const apiKey = apiKeyInput.value.trim();
+  const glmApiKey = glmApiKeyInput.value.trim();
   const modelSelect = document.getElementById('model-select');
   const selectedModel = modelSelect ? modelSelect.value : DEFAULT_MODEL;
 
-  if (!apiKey) {
-    showSettingsStatus('请输入 API Key', 'error');
-    return;
-  }
-
   try {
-    // 验证 API Key
-    const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // 如果设置了 OpenRouter API Key，则验证它
+    if (apiKey) {
+      const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (!response.ok) {
-      throw new Error('API Key 无效');
+      if (!response.ok) {
+        throw new Error('OpenRouter API Key 无效');
+      }
+    }
+
+    // 检查当前选中的模型是否与已设置的 Key 匹配
+    if (selectedModel.startsWith('glm') && !glmApiKey) {
+      throw new Error('使用 GLM 模型需要配置 GLM API Key');
+    }
+    if (!selectedModel.startsWith('glm') && !apiKey) {
+      throw new Error('使用 OpenRouter 模型需要配置 API Key');
     }
 
     // 保存设置
-    await chrome.storage.local.set({
-      geminiApiKey: apiKey,
-      selectedModel: selectedModel
-    });
+    const settings = {};
+    if (apiKey) settings.geminiApiKey = apiKey;
+    if (glmApiKey) settings.glmApiKey = glmApiKey;
+    settings.selectedModel = selectedModel;
+
+    await chrome.storage.local.set(settings);
 
     // 更新模型选择器
     const selectedModelData = AVAILABLE_MODELS.find(model => model.id === selectedModel);
@@ -468,12 +494,19 @@ async function sendMessage() {
 
   try {
     // 获取设置
-    const { geminiApiKey, selectedModel } = await chrome.storage.local.get(['geminiApiKey', 'selectedModel']);
-    if (!geminiApiKey) {
-      throw new Error('请先在设置中配置 API Key');
-    }
-
+    const { geminiApiKey, glmApiKey, selectedModel } = await chrome.storage.local.get(['geminiApiKey', 'glmApiKey', 'selectedModel']);
     const model = selectedModel || DEFAULT_MODEL;
+
+    // 检查 API Key
+    if (model.startsWith('glm')) {
+      if (!glmApiKey) {
+        throw new Error('请先在设置中配置 GLM API Key');
+      }
+    } else {
+      if (!geminiApiKey) {
+        throw new Error('请先在设置中配置 API Key');
+      }
+    }
     
     // 创建 AI 消息占位
     const aiMessage = {
@@ -493,26 +526,66 @@ async function sendMessage() {
     messageCount = currentChat.messageCount;
     chatCountSpan.textContent = `共 ${messageCount} 条对话`;
     displayCurrentChat();
+
+    let response;
     
-    // 调用 Open Router API
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${geminiApiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/tassel',
-        'X-Title': 'Tai Chat',
-        'Accept': 'text/event-stream'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{
-          role: 'user',
-          content: message
-        }],
-        stream: true
-      })
-    });
+    // 根据模型选择不同的 API
+    if (model.startsWith('glm')) {
+      // 获取历史消息
+      const history = currentChat.messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      
+      // 添加当前消息
+      history.push({
+        role: 'user',
+        content: message
+      });
+
+      // 调用智谱 AI API
+      response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${glmApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: history,
+          stream: true,
+          temperature: 0.7,
+          top_p: 0.7,
+          max_tokens: 1500,
+          stop: [],
+          request_id: Date.now().toString(),
+          do_sample: true,
+          repetition_penalty: 1.1
+        })
+      });
+    } else {
+      // 调用 Open Router API
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${geminiApiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/tassel',
+          'X-Title': 'Tai Chat',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{
+            role: 'user',
+            content: message
+          }],
+          stream: true
+        })
+      });
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -731,6 +804,21 @@ function deleteChat(chatId) {
 // 切换模型
 async function switchModel(modelId, modelName) {
   try {
+    // 检查如果是 GLM 模型，需要验证 GLM API Key
+    if (modelId.startsWith('glm')) {
+      const { glmApiKey } = await chrome.storage.local.get(['glmApiKey']);
+      if (!glmApiKey) {
+        showSettingsStatus('请先配置 GLM API Key', 'error');
+        // 切换回默认模型
+        const defaultModel = AVAILABLE_MODELS.find(model => model.id === DEFAULT_MODEL);
+        if (defaultModel) {
+          modelId = defaultModel.id;
+          modelName = defaultModel.name;
+        }
+        return;
+      }
+    }
+
     await chrome.storage.local.set({ selectedModel: modelId });
     
     // 更新聊天页面的模型显示
@@ -757,5 +845,6 @@ async function switchModel(modelId, modelName) {
     }
   } catch (error) {
     console.error('切换模型失败:', error);
+    showSettingsStatus('切换模型失败', 'error');
   }
 } 
