@@ -2,11 +2,11 @@
 
 [English](../README.md) | [中文](README_zh.md)
 
-Tai Chat 是一个基于 OpenRouter API 的浏览器扩展，让你可以方便地使用各种 AI 模型进行对话。
+Tai Chat 是一个基于 OpenRouter API 和智谱 AI API 的浏览器扩展，让你可以方便地使用各种 AI 模型进行对话。
 
 ## 功能特点
 
-- 🤖 支持多个 AI 模型（Gemini 系列等）
+- 🤖 支持多个 AI 模型（Gemini 系列、GLM 系列等）
 - 💬 简洁的聊天界面
 - 🎨 代码高亮显示
 - 📝 Markdown 格式支持
@@ -30,13 +30,16 @@ Tai Chat 是一个基于 OpenRouter API 的浏览器扩展，让你可以方便�
 
 ## 使用方法
 
-1. 获取 API Key
-   - 访问 [OpenRouter](https://openrouter.ai/keys) 获取 API Key
-   - 在扩展的设置页面中填入你的 API Key
+1. 获取 API Keys
+   - 访问 [OpenRouter](https://openrouter.ai/keys) 获取 OpenRouter API Key
+   - 访问 [智谱 AI](https://open.bigmodel.cn/usercenter/apikeys) 获取 GLM API Key
+   - 在扩展的设置页面中填入你的 API Keys
 
 2. 选择模型
    - 在设置页面选择你想使用的 AI 模型
-   - 目前支持多个 Gemini 系列模型
+   - 目前支持的模型：
+     - Gemini 系列模型（需要 OpenRouter API Key）
+     - GLM-4 Flash（需要 GLM API Key）
 
 3. 开始对话
    - 点击 "新的聊天" 开始一个新的对话
@@ -55,7 +58,8 @@ Tai Chat 是一个基于 OpenRouter API 的浏览器扩展，让你可以方便�
 
 ## 注意事项
 
-- 请妥善保管你的 API Key
+- 请妥善保管你的 API Keys
+- 你只需要配置想要使用的模型对应的 API Key
 - 确保有稳定的网络连接
 - 如遇到问题，可以尝试刷新页面或重新加载扩展
 

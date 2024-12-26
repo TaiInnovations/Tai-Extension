@@ -2,11 +2,11 @@
 
 [English](README.md) | [中文](docs/README_zh.md)
 
-Tai Chat is a browser extension based on the OpenRouter API that allows you to easily chat with various AI models.
+Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API that allows you to easily chat with various AI models.
 
 ## Features
 
-- 🤖 Multiple AI Models Support (Gemini Series, etc.)
+- 🤖 Multiple AI Models Support (Gemini Series, GLM Series, etc.)
 - 💬 Clean Chat Interface
 - 🎨 Code Syntax Highlighting
 - 📝 Markdown Support
@@ -30,13 +30,16 @@ Tai Chat is a browser extension based on the OpenRouter API that allows you to e
 
 ## Usage
 
-1. Get API Key
-   - Visit [OpenRouter](https://openrouter.ai/keys) to obtain your API Key
-   - Enter your API Key in the extension settings
+1. Get API Keys
+   - Visit [OpenRouter](https://openrouter.ai/keys) to obtain your OpenRouter API Key
+   - Visit [Zhipu AI](https://open.bigmodel.cn/usercenter/apikeys) to obtain your GLM API Key
+   - Enter your API Keys in the extension settings
 
 2. Select Model
    - Choose your preferred AI model in settings
-   - Multiple Gemini series models available
+   - Multiple models available:
+     - Gemini series models (requires OpenRouter API Key)
+     - GLM-4 Flash (requires GLM API Key)
 
 3. Start Chatting
    - Click "New Chat" to start a new conversation
@@ -55,7 +58,8 @@ Tai Chat is a browser extension based on the OpenRouter API that allows you to e
 
 ## Notes
 
-- Keep your API Key secure
+- Keep your API Keys secure
+- You only need to configure the API Key for the model type you want to use
 - Ensure stable internet connection
 - If issues occur, try refreshing or reloading the extension
 
