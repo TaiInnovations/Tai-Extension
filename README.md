@@ -12,6 +12,7 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 - 📝 Markdown Support
 - 🔄 Chat Session Management
 - ⚙️ Simple Settings Interface
+- 📸 Export Chat Messages as Images
 
 ## Installation
 
@@ -49,6 +50,11 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 4. Manage Sessions
    - View all chat sessions in the left sidebar
    - Switch between or delete sessions as needed
+
+5. Export Chat Messages
+   - Hover over any AI response message
+   - Click the download icon in the top-right corner
+   - The message will be saved as a PNG image with transparent background
 
 ## Shortcuts
 
