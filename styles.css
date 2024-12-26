@@ -344,6 +344,7 @@ body {
 }
 
 .message {
+  position: relative;
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -890,4 +891,79 @@ body {
 .chat-item .timestamp {
   color: #999;
   font-size: 12px;
+}
+
+.message-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.save-image-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.save-image-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.message-for-image {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 800px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.message-for-image .content {
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+
+.message-for-image pre {
+  white-space: pre-wrap;
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 1em 0;
+  border: 1px solid #e1e4e8;
+  position: relative;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+}
+
+.message-for-image code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.message-for-image p {
+  margin: 0 0 1em;
+}
+
+.message-for-image p:last-child {
+  margin-bottom: 0;
 } 

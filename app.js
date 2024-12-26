@@ -711,6 +711,59 @@ function renderMessage(message) {
   const content = document.createElement('div');
   content.className = 'content';
   
+  // 如果是 AI 回复消息，添加保存图片按钮
+  if (message.role === 'assistant') {
+    const actionButtons = document.createElement('div');
+    actionButtons.className = 'message-actions';
+    
+    const saveImageBtn = document.createElement('button');
+    saveImageBtn.className = 'save-image-btn';
+    saveImageBtn.title = '保存为图片';
+    saveImageBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    `;
+    
+    saveImageBtn.onclick = async () => {
+      try {
+        if (typeof html2canvas === 'undefined') {
+          throw new Error('html2canvas 库未加载，请刷新页面重试');
+        }
+
+        // 显示加载状态
+        const originalText = saveImageBtn.innerHTML;
+        saveImageBtn.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">⌛</span>';
+        saveImageBtn.style.pointerEvents = 'none';
+
+        // 使用 ImageExporter 导出图片
+        await ImageExporter.exportToImage(content);
+
+        // 恢复按钮状态
+        saveImageBtn.innerHTML = originalText;
+        saveImageBtn.style.pointerEvents = 'auto';
+
+        // 添加成功动画
+        saveImageBtn.innerHTML = '✓';
+        setTimeout(() => {
+          saveImageBtn.innerHTML = originalText;
+        }, 1000);
+      } catch (error) {
+        console.error('保存图片失败:', error);
+        ImageExporter.showError(error.message || '保存图片失败，请重试');
+
+        // 恢复按钮状态
+        saveImageBtn.innerHTML = originalText;
+        saveImageBtn.style.pointerEvents = 'auto';
+      }
+    };
+    
+    actionButtons.appendChild(saveImageBtn);
+    messageDiv.appendChild(actionButtons);
+  }
+  
   // 使用 marked 解析 Markdown
   if (message.role === 'error') {
     content.textContent = message.content || '未知错误';
