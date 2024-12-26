@@ -304,11 +304,14 @@ function updateChatList() {
       hour12: false
     });
     
+    // 计算实际的消息数量
+    const messageCount = chat.messages ? chat.messages.length : 0;
+    
     chatBtn.innerHTML = `
       <div class="info">
         <div class="title">${chat.title}</div>
         <div class="meta">
-          <span class="chat-count">${chat.messageCount || 0} 条对话</span>
+          <span class="chat-count">${messageCount} 条对话</span>
           <span class="timestamp">${formattedDate}</span>
         </div>
       </div>
@@ -362,8 +365,9 @@ function displayCurrentChat() {
   const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
   if (!currentChat) return;
   
-  // 更新消息计数
-  messageCount = currentChat.messageCount || 0;
+  // 确保消息计数正确
+  currentChat.messageCount = currentChat.messages ? currentChat.messages.length : 0;
+  messageCount = currentChat.messageCount;
   chatCountSpan.textContent = `共 ${messageCount} 条对话`;
   
   // 清空并显示消息
@@ -521,10 +525,9 @@ async function sendMessage() {
     
     currentChat.messages = currentChat.messages || [];
     currentChat.messages.push(aiMessage);
-    currentChat.messageCount = (currentChat.messageCount || 0) + 1;
     
-    messageCount = currentChat.messageCount;
-    chatCountSpan.textContent = `共 ${messageCount} 条对话`;
+    // 更新界面显示
+    updateChatList();
     displayCurrentChat();
 
     let response;
@@ -634,6 +637,7 @@ async function sendMessage() {
             
             // 更新消息内容
             aiMessage.content += delta.content;
+            updateChatList();
             displayCurrentChat();
             
             // 滚动到底部
@@ -672,16 +676,14 @@ function addMessage(text, type) {
 
   currentChat.messages = currentChat.messages || [];
   currentChat.messages.push(message);
-  currentChat.messageCount = (currentChat.messageCount || 0) + 1;
   
   // 更新第一条消息作为标题
   if (currentChat.messages.length === 1 && type === 'user') {
     currentChat.title = text.slice(0, 20) + (text.length > 20 ? '...' : '');
-    updateChatList();
   }
   
-  messageCount = currentChat.messageCount;
-  chatCountSpan.textContent = `共 ${messageCount} 条对话`;
+  // 更新界面
+  updateChatList();
   displayCurrentChat();
   saveToStorage();
 }
