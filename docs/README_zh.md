@@ -16,18 +16,22 @@ Tai Chat 是一个基于 OpenRouter API 和智谱 AI API 的浏览器扩展，�
 
 ## 安装步骤
 
-1. 下载扩展
+1. 从应用商店安装（推荐）
+   - [Chrome 网上应用店](https://chromewebstore.google.com/detail/tai-chat/oipligpjckkblgcneidlchoelogndigf)
+   - [Microsoft Edge 外接程序](https://microsoftedge.microsoft.com/addons/detail/tai-chat/ejpblckkpobpknondgkfhfmddkeklnpa)
+
+2. 手动安装
    - 克隆或下载此仓库到本地
    ```bash
    git clone https://github.com/yourusername/Tai-Extension.git
    ```
 
-2. 在 Chrome 浏览器中加载扩展
-   - 打开 Chrome 浏览器
-   - 在地址栏输入 `chrome://extensions/`
-   - 打开右上角的 "开发者模式"
-   - 点击左上角的 "加载已解压的扩展程序"
-   - 选择你下载的扩展文件夹
+   - 在浏览器中加载
+     - 打开 Chrome/Edge 浏览器
+     - 在地址栏输入 `chrome://extensions/`（Chrome）或 `edge://extensions/`（Edge）
+     - 打开右上角的 "开发者模式"
+     - 点击左上角的 "加载已解压的扩展程序"
+     - 选择你下载的扩展文件夹
 
 ## 使用方法
 

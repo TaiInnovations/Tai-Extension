@@ -16,18 +16,22 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 
 ## Installation
 
-1. Download Extension
+1. Install from Store (Recommended)
+   - [Chrome Web Store](https://chromewebstore.google.com/detail/tai-chat/oipligpjckkblgcneidlchoelogndigf)
+   - [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/tai-chat/ejpblckkpobpknondgkfhfmddkeklnpa)
+
+2. Manual Installation
    - Clone or download this repository
    ```bash
    git clone https://github.com/yourusername/Tai-Extension.git
    ```
 
-2. Load in Chrome Browser
-   - Open Chrome browser
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" in the top right
-   - Click "Load unpacked" in the top left
-   - Select the extension folder you downloaded
+   - Load in Browser
+     - Open Chrome/Edge browser
+     - Navigate to `chrome://extensions/` (Chrome) or `edge://extensions/` (Edge)
+     - Enable "Developer mode" in the top right
+     - Click "Load unpacked" in the top left
+     - Select the extension folder you downloaded
 
 ## Usage
 
