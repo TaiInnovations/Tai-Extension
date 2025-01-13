@@ -4,9 +4,7 @@
   "version": "1.0.1",
   "description": "基于 Gemini 的 AI 聊天助手",
   "permissions": [
-    "storage",
-    "activeTab",
-    "tabs"
+    "storage"
   ],
   "action": {
     "default_icon": {
