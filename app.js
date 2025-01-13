@@ -511,25 +511,11 @@ async function sendMessage() {
         throw new Error('请先在设置中配置 API Key');
       }
     }
-    
-    // 创建 AI 消息占位
-    const aiMessage = {
-      id: Date.now(),
-      content: '',
-      role: 'assistant',
-      timestamp: new Date().toISOString()
-    };
-    
+
+    // 获取当前会话
     const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
     if (!currentChat) return;
     
-    currentChat.messages = currentChat.messages || [];
-    currentChat.messages.push(aiMessage);
-    
-    // 更新界面显示
-    updateChatList();
-    displayCurrentChat();
-
     let response;
     
     // 根据模型选择不同的 API
@@ -592,8 +578,34 @@ async function sendMessage() {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'API 请求失败');
+      let errorMessage = '请求失败';
+      
+      // 处理不同类型的错误
+      if (response.status === 429) {
+        errorMessage = '请求过于频繁，请稍后再试';
+      } else if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
+      }
+      
+      throw new Error(errorMessage);
     }
+
+    // 创建 AI 消息占位
+    const aiMessage = {
+      id: Date.now(),
+      content: '',
+      role: 'assistant',
+      timestamp: new Date().toISOString()
+    };
+    
+    currentChat.messages = currentChat.messages || [];
+    currentChat.messages.push(aiMessage);
+    
+    // 更新界面显示
+    updateChatList();
+    displayCurrentChat();
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -659,7 +671,14 @@ async function sendMessage() {
     }
   } catch (error) {
     console.error('API 错误:', error);
+    // 移除最后一条空的AI消息
+    const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
+    if (currentChat && currentChat.messages) {
+      currentChat.messages = currentChat.messages.filter(msg => msg.content || msg.role !== 'assistant');
+    }
+    // 添加错误消息
     addMessage(error.message, 'error');
+    saveToStorage();
   }
 }
 
