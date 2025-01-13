@@ -13,6 +13,8 @@ Tai Chat 是一个基于 OpenRouter API 和智谱 AI API 的浏览器扩展，�
 - 🔄 会话管理
 - ⚙️ 简单的设置界面
 - 📸 会话内容导出为图片
+- 🖼️ Gemini 模型支持图片输入
+- 🗑️ 消息和会话管理
 
 ## 安装步骤
 
@@ -43,22 +45,27 @@ Tai Chat 是一个基于 OpenRouter API 和智谱 AI API 的浏览器扩展，�
 2. 选择模型
    - 在设置页面选择你想使用的 AI 模型
    - 目前支持的模型：
-     - Gemini 系列模型（需要 OpenRouter API Key）
+     - Gemini 系列模型（需要 OpenRouter API Key，支持图片输入）
      - GLM-4 Flash（需要 GLM API Key）
 
 3. 开始对话
    - 点击 "新的聊天" 开始一个新的对话
    - 在输入框中输入你的问题
    - 按 Enter 发送消息（Shift + Enter 换行）
+   - 点击图片图标上传并发送图片（仅 Gemini 模型支持）
+   - 图片大小限制为 5MB
 
 4. 管理会话
    - 左侧边栏显示所有会话记录
    - 可以随时切换或删除会话
+   - 使用消息中的菜单删除单条消息
+   - 使用侧边栏中的删除按钮删除整个会话
 
 5. 导出会话内容
    - 将鼠标悬停在任意 AI 回复消息上
-   - 点击右上角的下载图标
-   - 消息内容将保存为透明背景的 PNG 图片
+   - 点击右上角的菜单图标
+   - 选择"保存为图片"将消息保存为 PNG 图片
+   - 选择"删除消息"可删除单条消息
 
 ## 快捷键
 
@@ -78,6 +85,16 @@ Tai Chat 是一个基于 OpenRouter API 和智谱 AI API 的浏览器扩展，�
 - 本扩展使用原生 JavaScript 开发
 - 使用 Chrome Extension Manifest V3
 - 支持实时代码高亮和 Markdown 渲染
+
+### 打包扩展
+
+1. 确保已安装 `zip` 命令
+2. 运行打包脚本：
+   ```bash
+   chmod +x build.sh
+   ./build.sh
+   ```
+3. 打包后的扩展文件将保存在 `dist` 目录中
 
 ## 许可证
 

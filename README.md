@@ -13,6 +13,8 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 - 🔄 Chat Session Management
 - ⚙️ Simple Settings Interface
 - 📸 Export Chat Messages as Images
+- 🖼️ Image Support for Gemini Models
+- 🗑️ Message and Session Management
 
 ## Installation
 
@@ -43,22 +45,27 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 2. Select Model
    - Choose your preferred AI model in settings
    - Multiple models available:
-     - Gemini series models (requires OpenRouter API Key)
+     - Gemini series models (requires OpenRouter API Key, supports image input)
      - GLM-4 Flash (requires GLM API Key)
 
 3. Start Chatting
    - Click "New Chat" to start a new conversation
    - Type your message in the input box
    - Press Enter to send (Shift + Enter for new line)
+   - Click the image icon to upload and send images (Gemini models only)
+   - Images are limited to 5MB in size
 
 4. Manage Sessions
    - View all chat sessions in the left sidebar
    - Switch between or delete sessions as needed
+   - Delete individual messages using the menu in each message
+   - Delete entire conversations using the delete button in the sidebar
 
 5. Export Chat Messages
    - Hover over any AI response message
-   - Click the download icon in the top-right corner
-   - The message will be saved as a PNG image with transparent background
+   - Click the menu icon in the top-right corner
+   - Choose "Save as Image" to save the message as a PNG image
+   - Choose "Delete Message" to remove individual messages
 
 ## Shortcuts
 
@@ -78,6 +85,16 @@ Tai Chat is a browser extension based on the OpenRouter API and Zhipu AI API tha
 - Built with vanilla JavaScript
 - Uses Chrome Extension Manifest V3
 - Features real-time code highlighting and Markdown rendering
+
+### Build Extension
+
+1. Make sure you have `zip` command installed
+2. Run the build script:
+   ```bash
+   chmod +x build.sh
+   ./build.sh
+   ```
+3. The packaged extension will be available in the `dist` directory
 
 ## License
 
