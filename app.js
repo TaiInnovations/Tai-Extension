@@ -606,10 +606,20 @@ async function sendMessage() {
         },
         body: JSON.stringify({
           model: model,
-          messages: [{
-            role: 'user',
-            content: userContent
-          }],
+          messages: currentChat.messages
+            .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+            .map(msg => ({
+              role: msg.role,
+              content: msg.role === 'user' && msg.image ? 
+                [
+                  { type: 'text', text: msg.content || '' },
+                  { type: 'image_url', image_url: { url: msg.image.data } }
+                ] : msg.content
+            }))
+            .concat([{
+              role: 'user',
+              content: userContent
+            }]),
           stream: true
         })
       });
@@ -784,78 +794,130 @@ function renderMessage(message) {
     }
   }
 
-  // 如果是 AI 回复消息，添加保存图片按钮
+  // 如果是 AI 回复消息，添加操作按钮
   if (message.role === 'assistant') {
     const actionButtons = document.createElement('div');
     actionButtons.className = 'message-actions';
     
-    const saveImageBtn = document.createElement('button');
-    saveImageBtn.className = 'save-image-btn';
-    saveImageBtn.title = '保存为图片';
-    saveImageBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    // 创建更多按钮
+    const moreBtn = document.createElement('button');
+    moreBtn.className = 'message-action-btn more-btn';
+    moreBtn.title = '更多操作';
+    moreBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="1"></circle>
+        <circle cx="19" cy="12" r="1"></circle>
+        <circle cx="5" cy="12" r="1"></circle>
+      </svg>
+    `;
+
+    // 创建更多操作菜单
+    const moreMenu = document.createElement('div');
+    moreMenu.className = 'message-action-menu';
+
+    // 保存为图片选项
+    const saveImageItem = document.createElement('div');
+    saveImageItem.className = 'message-action-item save-image';
+    saveImageItem.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
+      保存为图片
     `;
-    
-    saveImageBtn.onclick = async () => {
+
+    // 删除消息选项
+    const deleteItem = document.createElement('div');
+    deleteItem.className = 'message-action-item delete';
+    deleteItem.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+      删除消息
+    `;
+
+    // 添加事件监听器
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moreMenu.classList.toggle('active');
+    });
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', () => {
+      moreMenu.classList.remove('active');
+    });
+
+    // 保存为图片功能
+    saveImageItem.addEventListener('click', async () => {
       try {
         if (typeof html2canvas === 'undefined') {
           throw new Error('html2canvas 库未加载，请刷新页面重试');
         }
 
         // 显示加载状态
-        const originalText = saveImageBtn.innerHTML;
-        saveImageBtn.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">⌛</span>';
-        saveImageBtn.style.pointerEvents = 'none';
+        saveImageItem.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">⌛</span> 保存中...';
+        saveImageItem.style.pointerEvents = 'none';
 
         // 使用 ImageExporter 导出图片
         await ImageExporter.exportToImage(content);
 
         // 恢复按钮状态
-        saveImageBtn.innerHTML = originalText;
-        saveImageBtn.style.pointerEvents = 'auto';
-
-        // 添加成功动画
-        saveImageBtn.innerHTML = '✓';
-        setTimeout(() => {
-          saveImageBtn.innerHTML = originalText;
-        }, 1000);
+        saveImageItem.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          保存为图片
+        `;
+        saveImageItem.style.pointerEvents = 'auto';
+        moreMenu.classList.remove('active');
       } catch (error) {
         console.error('保存图片失败:', error);
         ImageExporter.showError(error.message || '保存图片失败，请重试');
 
         // 恢复按钮状态
-        saveImageBtn.innerHTML = originalText;
-        saveImageBtn.style.pointerEvents = 'auto';
+        saveImageItem.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          保存为图片
+        `;
+        saveImageItem.style.pointerEvents = 'auto';
       }
-    };
+    });
+
+    // 删除消息功能
+    deleteItem.addEventListener('click', () => {
+      const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
+      if (currentChat) {
+        const messageIndex = currentChat.messages.findIndex(m => m.id === message.id);
+        if (messageIndex !== -1) {
+          currentChat.messages.splice(messageIndex, 1);
+          updateChatList();
+          displayCurrentChat();
+        }
+      }
+      moreMenu.classList.remove('active');
+    });
+
+    // 组装菜单
+    moreMenu.appendChild(saveImageItem);
+    moreMenu.appendChild(deleteItem);
     
-    actionButtons.appendChild(saveImageBtn);
-    messageDiv.appendChild(actionButtons);
+    // 添加按钮和菜单到操作区
+    actionButtons.appendChild(moreBtn);
+    actionButtons.appendChild(moreMenu);
+    content.appendChild(actionButtons);
   }
   
   contentWrapper.appendChild(avatar);
   contentWrapper.appendChild(content);
-  
-  // 添加时间戳
-  const timestamp = document.createElement('div');
-  timestamp.className = 'timestamp';
-  const date = new Date(message.timestamp);
-  timestamp.textContent = date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  
   messageDiv.appendChild(contentWrapper);
-  messageDiv.appendChild(timestamp);
   
   return messageDiv;
 }

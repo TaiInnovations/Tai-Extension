@@ -1,0 +1,146 @@
+/* 消息操作按钮样式 */
+.message-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1;
+}
+
+.message .content:hover .message-actions {
+  opacity: 1;
+}
+
+.message-action-btn {
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.message-action-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.message-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.message-action-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: none;
+  z-index: 10;
+}
+
+.message-action-menu.active {
+  display: block;
+}
+
+.message-action-item {
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.message-action-item:hover {
+  background: #f0f7ff;
+}
+
+.message-action-item.delete {
+  color: #ef4444;
+}
+
+.message-action-item.delete:hover {
+  background: #fff5f5;
+}
+
+.message-action-item svg {
+  width: 14px;
+  height: 14px;
+}
+
+.message-action-item.save-image {
+  color: #1e88e5;
+}
+
+.message-action-item.save-image:hover {
+  background: #f0f7ff;
+}
+
+/* 图片导出样式 */
+.message-for-image {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 800px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.message-for-image .content {
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+
+.message-for-image pre {
+  white-space: pre-wrap;
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 1em 0;
+  border: 1px solid #e1e4e8;
+  position: relative;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+}
+
+.message-for-image code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.message-for-image p {
+  margin: 0 0 1em;
+}
+
+.message-for-image p:last-child {
+  margin-bottom: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 
