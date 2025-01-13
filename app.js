@@ -2,6 +2,7 @@
 let chats = [];
 let currentChatId = null;
 let messageCount = 0;
+let currentImage = null;
 
 // DOM 元素
 const chatMessages = document.getElementById('chat-messages');
@@ -18,6 +19,11 @@ const settingsStatus = document.getElementById('settings-status');
 const togglePasswordButton = document.getElementById('toggle-password');
 const toggleGlmPasswordButton = document.getElementById('toggle-glm-password');
 const chatCountSpan = document.querySelector('.chat-header span');
+const uploadButton = document.getElementById('upload-btn');
+const imageUpload = document.getElementById('image-upload');
+const imagePreview = document.getElementById('image-preview');
+const previewImg = document.getElementById('preview-img');
+const removeImageButton = document.getElementById('remove-image');
 
 // 常量
 const DEFAULT_MODEL = 'google/gemini-2.0-flash-exp:free';
@@ -255,6 +261,17 @@ function setupEventListeners() {
       e.stopPropagation();
     });
   }
+
+  // 图片上传相关
+  uploadButton.addEventListener('click', () => {
+    imageUpload.click();
+  });
+
+  imageUpload.addEventListener('change', handleImageUpload);
+  removeImageButton.addEventListener('click', removeImage);
+
+  // 初始化图片预览
+  setupImagePreview();
 }
 
 // 聊天相关函数
@@ -490,11 +507,28 @@ function showSettingsStatus(message, type) {
 // 消息处理
 async function sendMessage() {
   const message = userInput.value.trim();
-  if (!message) return;
+  if (!message && !currentImage) return;
 
   // 添加用户消息
-  addMessage(message, 'user');
+  const userContent = [];
+  if (message) {
+    userContent.push({
+      type: 'text',
+      text: message
+    });
+  }
+  if (currentImage) {
+    userContent.push({
+      type: 'image_url',
+      image_url: {
+        url: currentImage.data
+      }
+    });
+  }
+
+  addMessage(message, 'user', currentImage);
   userInput.value = '';
+  removeImage();
 
   try {
     // 获取设置
@@ -520,6 +554,11 @@ async function sendMessage() {
     
     // 根据模型选择不同的 API
     if (model.startsWith('glm')) {
+      // GLM模型暂不支持图片，如果有图片就提示
+      if (currentImage) {
+        throw new Error('GLM模型暂不支持图片输入');
+      }
+
       // 获取历史消息
       const history = currentChat.messages
         .filter(msg => msg.role === 'user' || msg.role === 'assistant')
@@ -569,7 +608,7 @@ async function sendMessage() {
           model: model,
           messages: [{
             role: 'user',
-            content: message
+            content: userContent
           }],
           stream: true
         })
@@ -671,18 +710,11 @@ async function sendMessage() {
     }
   } catch (error) {
     console.error('API 错误:', error);
-    // 移除最后一条空的AI消息
-    const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
-    if (currentChat && currentChat.messages) {
-      currentChat.messages = currentChat.messages.filter(msg => msg.content || msg.role !== 'assistant');
-    }
-    // 添加错误消息
     addMessage(error.message, 'error');
-    saveToStorage();
   }
 }
 
-function addMessage(text, type) {
+function addMessage(text, type, image = null) {
   const currentChat = chats.find(chat => parseInt(chat.id) === parseInt(currentChatId));
   if (!currentChat) return;
 
@@ -692,6 +724,11 @@ function addMessage(text, type) {
     role: type,
     timestamp: new Date().toISOString()
   };
+
+  // 如果有图片，添加到消息中
+  if (image) {
+    message.image = image;
+  }
 
   currentChat.messages = currentChat.messages || [];
   currentChat.messages.push(message);
@@ -730,6 +767,23 @@ function renderMessage(message) {
   const content = document.createElement('div');
   content.className = 'content';
   
+  // 如果有图片，添加到内容中
+  if (message.image) {
+    const img = document.createElement('img');
+    img.src = message.image.data;
+    img.alt = message.image.name || '上传的图片';
+    content.appendChild(img);
+  }
+
+  // 如果有文本内容，使用 marked 解析
+  if (message.content) {
+    if (message.role === 'error') {
+      content.textContent = message.content;
+    } else {
+      content.innerHTML += marked.parse(message.content);
+    }
+  }
+
   // 如果是 AI 回复消息，添加保存图片按钮
   if (message.role === 'assistant') {
     const actionButtons = document.createElement('div');
@@ -781,49 +835,6 @@ function renderMessage(message) {
     
     actionButtons.appendChild(saveImageBtn);
     messageDiv.appendChild(actionButtons);
-  }
-  
-  // 使用 marked 解析 Markdown
-  if (message.role === 'error') {
-    content.textContent = message.content || '未知错误';
-  } else {
-    // 预处理代码块，确保语言标记正确
-    let processedContent = message.content || '';
-    processedContent = processedContent.replace(/```(\w+)?\n/g, (match, lang) => {
-      return `\`\`\`${lang || 'plaintext'}\n`;
-    });
-    
-    content.innerHTML = marked.parse(processedContent);
-    
-    // 处理没有指定语言的代码块
-    content.querySelectorAll('pre code:not([class])').forEach(block => {
-      block.className = 'language-plaintext';
-    });
-    
-    // 应用代码高亮
-    content.querySelectorAll('pre code').forEach(block => {
-      hljs.highlightElement(block);
-      
-      // 添加复制按钮
-      const pre = block.parentElement;
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'copy-btn';
-      copyBtn.textContent = '复制';
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(block.innerText);
-          copyBtn.textContent = '已复制';
-          copyBtn.classList.add('copied');
-          setTimeout(() => {
-            copyBtn.textContent = '复制';
-            copyBtn.classList.remove('copied');
-          }, 2000);
-        } catch (err) {
-          console.error('复制失败:', err);
-        }
-      });
-      pre.appendChild(copyBtn);
-    });
   }
   
   contentWrapper.appendChild(avatar);
@@ -921,4 +932,89 @@ async function switchModel(modelId, modelName) {
     console.error('切换模型失败:', error);
     showSettingsStatus('切换模型失败', 'error');
   }
+}
+
+// 图片处理函数
+async function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      throw new Error('请选择图片文件');
+    }
+
+    // 检查文件大小（限制为5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('图片大小不能超过5MB');
+    }
+
+    // 转换为base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentImage = {
+        data: e.target.result,
+        type: file.type,
+        name: file.name
+      };
+      
+      // 显示缩略图
+      const inputImage = document.getElementById('input-image');
+      const imageContainer = document.getElementById('image-container');
+      inputImage.src = e.target.result;
+      imageContainer.style.display = 'block';
+      uploadButton.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } catch (error) {
+    console.error('图片处理错误:', error);
+    showError(error.message);
+  }
+}
+
+function removeImage() {
+  currentImage = null;
+  const imageContainer = document.getElementById('image-container');
+  const uploadButton = document.getElementById('upload-btn');
+  const modal = document.getElementById('image-preview-modal');
+  
+  imageContainer.style.display = 'none';
+  uploadButton.style.display = 'flex';
+  modal.classList.remove('active');
+  
+  // 清空文件输入
+  imageUpload.value = '';
+}
+
+// 设置图片预览相关的事件监听
+function setupImagePreview() {
+  const imageContainer = document.getElementById('image-container');
+  const modal = document.getElementById('image-preview-modal');
+  const modalClose = modal.querySelector('.modal-close');
+  const previewImg = document.getElementById('preview-img');
+  const removeImageBtn = document.getElementById('remove-image');
+
+  // 点击缩略图显示预览
+  imageContainer.addEventListener('click', () => {
+    if (currentImage) {
+      previewImg.src = currentImage.data;
+      modal.classList.add('active');
+    }
+  });
+
+  // 关闭预览
+  modalClose.addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+
+  // 点击模态框外部关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
+
+  // 删除图片
+  removeImageBtn.addEventListener('click', removeImage);
 } 
